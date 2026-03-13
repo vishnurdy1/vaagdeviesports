@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel | TECHNOCRAFT × VAAGTARANG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'gaming-red': '#FF2E63',
+            'gaming-cyan': '#08D9D6',
+            'dark-bg': '#0A0A0F',
+            'card-dark': '#151824',
+            'border-c': '#1F2330',
+            'text-dim': '#9CA3AF'
+          },
+          fontFamily: { display: ['Space Grotesk', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Space Grotesk', sans-serif; background-color: #0A0A0F; color: #f2f2f2; overflow: hidden; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0A0A0F; }
+    ::-webkit-scrollbar-thumb { background: #1F2330; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #FF2E63; }
+
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      padding: 12px 20px; border-radius: 12px; font-weight: 700;
+      font-size: 0.8rem; opacity: 0; transform: translateY(8px);
+      transition: all 0.3s ease; pointer-events: none; max-width: 300px;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success { background: rgba(8, 217, 214, 0.08); border: 1px solid rgba(8, 217, 214, 0.25); color: #08D9D6; }
+    #toast.error   { background: rgba(255, 46, 99, 0.12); border: 1px solid rgba(255, 46, 99, 0.4);  color: #FF2E63; }
+    #toast.info    { background: rgba(8, 217, 214, 0.08); border: 1px solid rgba(8, 217, 214, 0.3); color: #08D9D6; }
+
+    /* ── REVEAL ANIMATIONS ── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: 0.1s; }
+    .reveal-d2 { transition-delay: 0.2s; }
+    .reveal-d3 { transition-delay: 0.3s; }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden bg-dark-bg text-white">
+
+  <!-- SIDEBAR (Section 9.3) -->
+  <aside class="w-60 border-r border-border-c flex flex-col p-6 flex-shrink-0">
+
+    <!-- Logo (3 lines stacked) -->
+    <!-- Logo -->
+    <a href="/" class="flex flex-col mb-8">
+      <span class="text-sm font-black italic tracking-tighter text-white uppercase">VAAGDEVI <span class="text-gaming-red">ESPORTS</span></span>
+    </a>
+
+    <!-- Nav -->
+    <nav class="flex flex-col gap-1 flex-1">
+      <button onclick="showSection('dashboard')" data-section="dashboard"
+        class="nav-btn text-left px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all text-gaming-red bg-gaming-red/10 border border-gaming-red/20 shadow-[0_0_15px_rgba(255,46,99,0.1)]">
+        DASHBOARD
+      </button>
+      <button onclick="showSection('teams')" data-section="teams"
+        class="nav-btn text-left px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all text-text-dim hover:text-white hover:bg-white/5">
+        TEAMS
+      </button>
+      <button onclick="showSection('schedule')" data-section="schedule"
+        class="nav-btn text-left px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all text-text-dim hover:text-white hover:bg-white/5">
+        SCHEDULE
+      </button>
+      <button onclick="showSection('logs')" data-section="logs"
+        class="nav-btn text-left px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all text-text-dim hover:text-white hover:bg-white/5">
+        MATCH LOGS
+      </button>
+      <button onclick="showSection('settings')" data-section="settings"
+        class="nav-btn text-left px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all text-text-dim hover:text-white hover:bg-white/5">
+        SETTINGS
+      </button>
+    </nav>
+
+    <!-- Profile + Logout -->
+    <div class="border-t border-border-c pt-4 space-y-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full border border-gaming-red/30 overflow-hidden bg-gaming-red/20 flex items-center justify-center text-xs font-black">
+          <img src="/static/images/vishnu.jpg" class="w-full h-full object-cover"
+            onerror="this.style.display='none'">
+          VR
+        </div>
+        <div>
+          <div class="text-xs font-black text-white">Vishnu Reddy</div>
+          <div class="text-[9px] font-bold text-text-dim uppercase">Admin</div>
+        </div>
+      </div>
+      <a href="/logout" class="block text-gaming-red font-black text-[10px] uppercase tracking-widest hover:text-gaming-cyan transition-colors">LOGOUT</a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 overflow-y-auto p-8">
+
+    <!-- DASHBOARD: Score Entry (Section 9.3) -->
+    <section id="section-dashboard" class="reveal">
+      <h1 class="text-3xl font-black uppercase italic text-white mb-8 tracking-tighter">Score <span class="text-gaming-red">Entry</span></h1>
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 max-w-5xl">
+
+        <!-- Score Form Card -->
+        <div class="bg-card-dark border border-border-c rounded-2xl p-8 shadow-2xl reveal reveal-d1">
+          <p class="text-[10px] font-black uppercase tracking-widest text-text-dim mb-6 italic">Submit Match Result</p>
+          <form id="score-form" class="space-y-4">
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Team Selection</label>
+              <select id="score-team" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors uppercase italic truncate">
+                <option value="">Loading teams...</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Match Number</label>
+              <input type="number" id="score-match-num" min="1" value="1"
+                class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Kills (Total)</label>
+                <input type="number" id="score-kills" min="0" placeholder="0" oninput="updatePointsPreview()"
+                  class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold text-center outline-none focus:border-primary-red transition-colors">
+              </div>
+              <div>
+                <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Placement #</label>
+                <input type="number" id="score-placement" min="1" placeholder="1" oninput="updatePointsPreview()"
+                  class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold text-center outline-none focus:border-primary-red transition-colors">
+              </div>
+            </div>
+            <!-- Points Preview -->
+            <div id="points-preview" class="bg-dark-bg border border-border-c rounded-xl p-4 text-center min-h-[80px] flex flex-col items-center justify-center">
+              <span class="text-text-dim text-[10px] font-black uppercase tracking-widest opacity-50">Enter values to preview points</span>
+            </div>
+            <button type="submit" class="w-full bg-gaming-red hover:bg-red-700 py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-gaming-red/20 transition-all active:scale-[0.98]">
+              POST RESULT
+            </button>
+          </form>
+        </div>
+
+        <!-- Match Control Card -->
+        <div class="bg-card-dark border border-border-c rounded-2xl p-8 shadow-2xl reveal reveal-d2">
+          <p class="text-[10px] font-black uppercase tracking-widest text-text-dim mb-6 italic">Match Control</p>
+
+          <!-- Quick Action Buttons -->
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <button onclick="goLive()"
+              class="py-3 rounded-xl font-black text-xs uppercase tracking-wide bg-gaming-red hover:bg-red-700 text-white transition-all shadow-lg shadow-gaming-red/20">
+              ▶ GO LIVE
+            </button>
+            <button onclick="goBreak()"
+              class="py-3 rounded-xl font-black text-xs uppercase tracking-wide bg-gaming-cyan/10 hover:bg-gaming-cyan/20 text-gaming-cyan border border-gaming-cyan/30 transition-all">
+              ⏸ BREAK
+            </button>
+            <button onclick="nextMatch()"
+              class="py-3 rounded-xl font-black text-xs uppercase tracking-wide bg-white/5 hover:bg-white/10 text-white border border-border-c transition-all">
+              ⏭ NEXT
+            </button>
+          </div>
+
+          <!-- Individual Controls -->
+          <div class="space-y-4">
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Stream Mode</label>
+              <div class="flex gap-2">
+                <select id="ctrl-stream-mode" class="flex-1 bg-black border border-border-c rounded-xl p-3 text-white font-bold outline-none focus:border-primary-red">
+                  <option value="live">Live Video</option>
+                  <option value="break">Break Screen</option>
+                  <option value="upcoming" selected>Streaming Soon</option>
+                  <option value="offline">Offline</option>
+                </select>
+                <button onclick="applyCtrl('stream_mode', document.getElementById('ctrl-stream-mode').value)"
+                  class="px-4 py-3 bg-white/5 border border-border-c rounded-xl font-black text-xs hover:border-primary-red transition-colors uppercase">Apply</button>
+              </div>
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Match Status</label>
+              <div class="flex gap-2">
+                <select id="ctrl-match-status" class="flex-1 bg-black border border-border-c rounded-xl p-3 text-white font-bold outline-none focus:border-primary-red">
+                  <option>Upcoming</option>
+                  <option>LIVE</option>
+                  <option>Finished</option>
+                  <option>Break</option>
+                </select>
+                <button onclick="applyCtrl('match_status', document.getElementById('ctrl-match-status').value)"
+                  class="px-4 py-3 bg-white/5 border border-border-c rounded-xl font-black text-xs hover:border-primary-red transition-colors uppercase">Apply</button>
+              </div>
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Break Message</label>
+              <div class="flex gap-2">
+                <input type="text" id="ctrl-break-msg" placeholder="Match 3 loading..."
+                  class="flex-1 bg-black border border-border-c rounded-xl p-3 text-white font-bold outline-none focus:border-primary-red transition-colors">
+                <button onclick="applyCtrl('break_message', document.getElementById('ctrl-break-msg').value)"
+                  class="px-4 py-3 bg-white/5 border border-border-c rounded-xl font-black text-xs hover:border-primary-red transition-colors uppercase">Update</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger Zone (Added Reset Option) -->
+          <div class="mt-8 pt-6 border-t border-border-c/50">
+            <button onclick="resetLeaderboard()"
+              class="w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] bg-red-900/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-900/30 transition-all flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-sm">delete_forever</span> RESET TOURNAMENT SCORES
+            </button>
+            <p class="text-[8px] text-text-dim mt-2 text-center uppercase tracking-widest opacity-50">Warning: This clears all kills, points and match logs</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini Leaderboard -->
+      <div class="mt-8 max-w-lg bg-card-dark border border-border-c rounded-2xl overflow-hidden shadow-2xl reveal reveal-d3">
+        <div class="p-5 border-b border-border-c flex justify-between items-center">
+            <span class="font-black uppercase text-xs italic">Current Standings (Top 5)</span>
+            <button onclick="loadMiniLeaderboard()" class="text-text-dim hover:text-white flex items-center gap-1 transition-all">
+                <span class="text-[9px] font-black uppercase tracking-widest">Refresh</span>
+                <span class="material-symbols-outlined text-sm">refresh</span>
+            </button>
+        </div>
+        <div id="mini-leaderboard" class="divide-y divide-border-c">
+          <div class="p-8 text-center text-text-dim text-sm font-bold animate-pulse uppercase">Syncing...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: TEAMS (Section 9.3) -->
+    <section id="section-teams" class="hidden reveal">
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-black uppercase italic text-white tracking-tighter">Team <span class="text-gaming-red">Management</span></h1>
+        <button onclick="toggleTeamForm()"
+          class="bg-gaming-cyan hover:bg-cyan-600 text-black font-black uppercase text-xs px-5 py-3 rounded-xl transition-all shadow-lg shadow-gaming-cyan/20 active:scale-95">
+          + Add New Team
+        </button>
+      </div>
+
+      <!-- Add/Edit Team Form -->
+      <div id="team-form-container" class="hidden mb-8 max-w-xl bg-card-dark border border-border-c rounded-2xl p-8 shadow-2xl">
+        <p id="team-form-title" class="text-[10px] font-black uppercase tracking-widest text-text-dim mb-6">Add Team</p>
+        <input type="hidden" id="edit-team-id">
+        <div class="space-y-4">
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Team Name</label>
+            <input type="text" id="team-name-input" placeholder="Team Alpha"
+              class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors uppercase italic">
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Captain Name</label>
+            <input type="text" id="captain-name-input" placeholder="John Doe"
+              class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Primary Game</label>
+            <select id="team-game-input" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red">
+              <option value="BGMI">BGMI</option>
+              <option value="Free Fire">Free Fire</option>
+            </select>
+          </div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="saveTeam()"
+              class="flex-1 bg-primary-red hover:bg-red-700 py-3 rounded-xl font-black uppercase text-sm transition-all tracking-widest">Save Team</button>
+            <button onclick="toggleTeamForm(false)"
+              class="px-6 py-3 border border-border-c rounded-xl font-black uppercase text-xs text-text-dim hover:text-white hover:border-white/30 transition-all tracking-widest">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teams Table -->
+      <div class="bg-card-dark border border-border-c rounded-2xl overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+                  <th class="p-4">Team</th>
+                  <th class="p-4">Captain</th>
+                  <th class="p-4">Game</th>
+                  <th class="p-4 text-center">Total Pts</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="teams-table-body" class="divide-y divide-border-c font-bold uppercase italic text-sm"></tbody>
+            </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: SCHEDULE (Section 9.3) -->
+    <section id="section-schedule" class="hidden reveal">
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-black uppercase italic text-white tracking-tighter">Match <span class="text-gaming-red">Schedule</span></h1>
+        <button onclick="toggleScheduleForm()"
+          class="bg-gaming-cyan hover:bg-cyan-600 text-black font-black uppercase text-xs px-5 py-3 rounded-xl transition-all shadow-lg shadow-gaming-cyan/20 active:scale-95">
+          + Add Match Slot
+        </button>
+      </div>
+
+      <!-- Add/Edit Schedule Form -->
+      <div id="schedule-form-container" class="hidden mb-8 max-w-xl bg-card-dark border border-border-c rounded-2xl p-8 shadow-2xl">
+        <p id="schedule-form-title" class="text-[10px] font-black uppercase tracking-widest text-text-dim mb-6">Add Match Slot</p>
+        <input type="hidden" id="edit-schedule-id">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Match #</label>
+            <input type="number" id="sched-match-num" min="1" placeholder="1"
+              class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors text-center">
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Game</label>
+            <select id="sched-game" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red">
+              <option value="BGMI">BGMI</option>
+              <option value="Free Fire">Free Fire</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Map Name</label>
+            <input type="text" id="sched-map" placeholder="Erangel"
+              class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Start Time</label>
+            <input type="text" id="sched-time" placeholder="10:00 AM"
+              class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+          </div>
+          <div class="col-span-2">
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Match Status</label>
+            <select id="sched-status" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red">
+              <option value="Upcoming">Upcoming</option>
+              <option value="Live">Live</option>
+              <option value="Finished">Finished</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="saveSchedule()" class="flex-1 bg-primary-red hover:bg-red-700 py-3 rounded-xl font-black uppercase text-sm transition-all tracking-widest">Save Slot</button>
+          <button onclick="toggleScheduleForm(false)" class="px-6 py-3 border border-border-c rounded-xl font-black uppercase text-xs text-text-dim hover:text-white transition-all tracking-widest">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Schedule Table -->
+      <div class="bg-card-dark border border-border-c rounded-2xl overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+                  <th class="p-4">#</th>
+                  <th class="p-4">Game</th>
+                  <th class="p-4">Map</th>
+                  <th class="p-4">Time</th>
+                  <th class="p-4">Quick Status</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-table-body" class="divide-y divide-border-c font-bold uppercase italic text-sm"></tbody>
+            </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: LOGS (Section 9.3) -->
+    <section id="section-logs" class="hidden reveal">
+      <h1 class="text-3xl font-black uppercase italic text-white mb-2 tracking-tighter">Audit <span class="text-gaming-red">Logs</span></h1>
+      <p class="text-text-dim text-sm font-bold uppercase tracking-widest mb-8">Match submission trail</p>
+      <div class="bg-card-dark border border-border-c rounded-2xl overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+                  <th class="p-4">Time</th>
+                  <th class="p-4">Match</th>
+                  <th class="p-4">Team</th>
+                  <th class="p-4 text-center">Kills</th>
+                  <th class="p-4 text-center">Place</th>
+                  <th class="p-4 text-center">Pts</th>
+                  <th class="p-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table-body" class="divide-y divide-border-c text-[11px] font-bold uppercase tracking-widest"></tbody>
+            </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: SETTINGS (Section 9.3) -->
+    <section id="section-settings" class="hidden reveal">
+      <h1 class="text-3xl font-black uppercase italic text-white mb-8 tracking-tighter">Platform <span class="text-gaming-red">Configuration</span></h1>
+      <div class="max-w-3xl bg-card-dark border border-border-c rounded-[2rem] p-8 shadow-2xl">
+        <div class="space-y-6">
+
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Tournament Display Name</label>
+            <input type="text" id="s-tournament-name" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+          </div>
+          
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Live Game Mode</label>
+              <select id="s-game-mode" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red">
+                <option value="BGMI">BGMI</option>
+                <option value="Free Fire">Free Fire</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Map Name</label>
+              <input type="text" id="s-map-name" placeholder="Erangel" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Active Match Number</label>
+              <input type="number" id="s-match-number" min="1" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Total Slots / Teams</label>
+              <input type="number" id="s-num-teams" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Next Match Prediction</label>
+              <input type="text" id="s-next-match" placeholder="Free Fire" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Global Match Status</label>
+              <select id="s-match-status" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red">
+                <option value="Upcoming">Upcoming</option>
+                <option value="LIVE">LIVE</option>
+                <option value="Finished">Finished</option>
+                <option value="Break">Break</option>
+              </select>
+            </div>
+          </div>
+          
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Stream Visualization</label>
+            <select id="s-stream-mode" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red">
+              <option value="live">Live — Active Broadcast</option>
+              <option value="break">Break — Pulse Mode</option>
+              <option value="upcoming">Upcoming — Standby</option>
+              <option value="offline">Offline — Closing</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Custom Break Message</label>
+            <input type="text" id="s-break-message" placeholder="Stay tuned! Next match loading..." class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+          </div>
+          
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">YouTube Live URL</label>
+            <input type="text" id="s-youtube-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+            <p class="text-text-dim text-[10px] mt-2 font-bold uppercase tracking-widest opacity-60 italic">Supports watch?v=, youtu.be/ or direct embed links.</p>
+          </div>
+          
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Global Registration Form URL</label>
+            <input type="text" id="s-registration-url" placeholder="https://docs.google.com/forms/..." class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
+          </div>
+
+          <div class="flex gap-4">
+            <button onclick="saveSettings()"
+                class="flex-1 bg-gaming-red hover:bg-red-700 py-5 rounded-2xl font-black uppercase tracking-widest mt-6 transition-all shadow-xl shadow-gaming-red/20 active:scale-[0.98]">
+                SAVE ALL SETTINGS CONFIG
+            </button>
+            <button onclick="syncLeaderboard()"
+                class="px-8 bg-gaming-cyan/10 hover:bg-gaming-cyan text-gaming-cyan hover:text-black border border-gaming-cyan/30 py-5 rounded-2xl font-black uppercase tracking-widest mt-6 transition-all active:scale-[0.98]">
+                SYNC STANDINGS
+            </button>
+          </div>
+          <p class="text-text-dim text-[10px] text-center uppercase font-black tracking-widest opacity-30">Tournament dashboard syncs every 10 seconds</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast"></div>
+
+  <!-- JAVASCRIPT (Section 9.4) -->
+  <script>
+    // ──────────────────────────────────────────
+    // Helpers
+    // ──────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.className = 'show ' + type;
+      setTimeout(() => { t.className = ''; }, 3000);
+    }
+    async function apiPost(url, body) {
+      const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      return r.json();
+    }
+    async function apiPut(url, body) {
+      const r = await fetch(url, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      return r.json();
+    }
+    async function apiDelete(url) {
+      const r = await fetch(url, { method:'DELETE' });
+      return r.json();
+    }
+
+    // ──────────────────────────────────────────
+    // Section Switching
+    // ──────────────────────────────────────────
+    function showSection(name) {
+      ['dashboard','teams','schedule','logs','settings'].forEach(s => {
+        const el = document.getElementById('section-' + s);
+        if (el) el.classList.toggle('hidden', s !== name);
+      });
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const active = btn.dataset.section === name;
+        btn.classList.toggle('text-gaming-red', active);
+        btn.classList.toggle('bg-gaming-red/10', active);
+        btn.classList.toggle('border-gaming-red/20', active);
+        btn.classList.toggle('text-text-dim', !active);
+        btn.classList.toggle('bg-transparent', !active);
+        btn.classList.toggle('border-transparent', !active);
+      });
+      if (name === 'teams')    loadTeams();
+      if (name === 'schedule') loadSchedule();
+      if (name === 'logs')     loadLogs();
+      if (name === 'settings') loadSettings();
+    }
+
+    // ──────────────────────────────────────────
+    // Points Preview (Section 9.4)
+    // ──────────────────────────────────────────
+    function getPlacementPoints(p) {
+      p = parseInt(p);
+      if (p === 1) return 15; if (p === 2) return 12; if (p === 3) return 10;
+      if (p === 4) return 8;  if (p === 5) return 6;
+      if (p >= 6  && p <= 10) return 4;
+      if (p >= 11 && p <= 15) return 2;
+      return 0;
+    }
+    function updatePointsPreview() {
+      const kills = parseInt(document.getElementById('score-kills').value) || 0;
+      const place = parseInt(document.getElementById('score-placement').value) || 0;
+      const el = document.getElementById('points-preview');
+      if (!place) {
+        el.innerHTML = '<span class="text-text-dim text-[10px] font-black uppercase tracking-widest opacity-50">Enter values to preview points</span>';
+        return;
+      }
+      const pp = getPlacementPoints(place);
+      const total = kills + pp;
+      el.innerHTML = `
+        <div class="text-[10px] text-text-dim font-black uppercase tracking-[0.2em] mb-2 italic">
+          ${kills} kills + #${place} placement (${pp}pts)
+        </div>
+        <div class="text-3xl font-black text-gaming-red italic tracking-tighter">= ${total} PTS</div>`;
+    }
+
+    // ──────────────────────────────────────────
+    // Score Form Submit (Section 9.4)
+    // ──────────────────────────────────────────
+    document.getElementById('score-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const team_name = document.getElementById('score-team').value;
+      const match_num = document.getElementById('score-match-num').value;
+      const kills     = parseInt(document.getElementById('score-kills').value);
+      const placement = parseInt(document.getElementById('score-placement').value);
+      
+      if (!team_name) { showToast('Select a team', 'error'); return; }
+      if (isNaN(kills) || kills < 0) { showToast('Enter valid kills', 'error'); return; }
+      if (isNaN(placement) || placement < 1) { showToast('Enter valid placement', 'error'); return; }
+      
+      try {
+        const res = await apiPost('/api/update_score', { team_name, kills, placement });
+        if (res.success) {
+          showToast('✓ Match Result Posted!', 'success');
+          document.getElementById('score-kills').value = '';
+          document.getElementById('score-placement').value = '';
+          updatePointsPreview();
+          loadMiniLeaderboard();
+        } else {
+          showToast(res.message || 'Error posting score', 'error');
+        }
+      } catch(e) { showToast('Connection error', 'error'); }
+    });
+
+    // ──────────────────────────────────────────
+    // Mini Leaderboard
+    // ──────────────────────────────────────────
+    async function loadMiniLeaderboard() {
+      try {
+        const res = await fetch('/api/leaderboard');
+        const data = await res.json();
+        const el = document.getElementById('mini-leaderboard');
+        const top5 = data.slice(0, 5);
+        if (!top5.length) {
+          el.innerHTML = '<div class="p-8 text-center text-text-dim text-sm font-bold opacity-30 uppercase">No scores yet</div>';
+          return;
+        }
+        el.innerHTML = top5.map(t => `
+          <div class="flex items-center justify-between px-5 py-3 hover:bg-white/5 transition-colors group">
+            <span class="text-xs font-black text-gaming-cyan italic w-5">#${t.rank}</span>
+            <span class="flex-1 text-xs font-black text-white px-3 uppercase italic truncate">${t.team_name}</span>
+            <span class="text-[10px] text-text-dim font-bold uppercase tracking-widest">${t.kills}K</span>
+            <span class="text-sm font-black text-gaming-red italic ml-4 min-w-[50px] text-right">${t.points}pts</span>
+          </div>`).join('');
+      } catch(e) {}
+    }
+    setInterval(loadMiniLeaderboard, 10000);
+
+    // ──────────────────────────────────────────
+    // Match Control Quick Actions (Section 9.4)
+    // ──────────────────────────────────────────
+    async function applyCtrl(key, value) {
+      try {
+        await apiPost('/api/settings', { [key]: value });
+        showToast(`✓ Updated ${key.replace('_', ' ')}`, 'success');
+      } catch(e) { showToast('Update error', 'error'); }
+    }
+    async function goLive() {
+      await apiPost('/api/settings', { stream_mode: 'live', match_status: 'LIVE' });
+      document.getElementById('ctrl-stream-mode').value   = 'live';
+      document.getElementById('ctrl-match-status').value  = 'LIVE';
+      showToast('🔴 Broadcaster is now LIVE', 'success');
+    }
+    async function goBreak() {
+      await apiPost('/api/settings', { stream_mode: 'break', match_status: 'Break' });
+      document.getElementById('ctrl-stream-mode').value   = 'break';
+      document.getElementById('ctrl-match-status').value  = 'Break';
+      showToast('⏸ Break mode activated', 'info');
+    }
+    async function nextMatch() {
+      try {
+        const res = await fetch('/api/settings'); const s = await res.json();
+        const newNum = (parseInt(s.match_number) || 1) + 1;
+        await apiPost('/api/settings', { stream_mode: 'upcoming', match_status: 'Upcoming', match_number: String(newNum) });
+        document.getElementById('ctrl-stream-mode').value  = 'upcoming';
+        document.getElementById('ctrl-match-status').value = 'Upcoming';
+        document.getElementById('score-match-num').value = newNum;
+        showToast(`⏭ Switched to Match #${newNum}`, 'info');
+      } catch(e) { showToast('Error incrementing match', 'error'); }
+    }
+
+    async function resetLeaderboard() {
+      if (!confirm('CRITICAL ALERT: Are you sure you want to PERMANENTLY DELETE all team scores, kills, and match logs? This action cannot be undone.')) return;
+      
+      try {
+        const res = await apiPost('/api/reset_scores', {});
+        if (res.success) {
+          showToast('✓ Tournament Data Reset Successful', 'success');
+          // Refresh UI
+          loadMiniLeaderboard();
+          if (document.getElementById('section-logs').offsetParent !== null) loadLogs();
+          if (document.getElementById('section-teams').offsetParent !== null) loadTeams();
+        } else {
+          showToast(res.message || 'Reset failed', 'error');
+        }
+      } catch(e) { showToast('Reset connection error', 'error'); }
+    }
+
+    async function syncLeaderboard() {
+      try {
+        const res = await apiPost('/api/sync_leaderboard', {});
+        if (res.success) {
+          showToast('✓ Leaderboard recalulated from logs', 'success');
+          loadMiniLeaderboard();
+        } else showToast(res.message || 'Sync failed', 'error');
+      } catch(e) { showToast('Sync error', 'error'); }
+    }
+
+    // ──────────────────────────────────────────
+    // Teams CRUD (Section 9.4)
+    // ──────────────────────────────────────────
+    let teamsCache = [];
+    async function loadTeams() {
+      try {
+        const [tRes, sRes] = await Promise.all([fetch('/api/teams'), fetch('/api/team_stats')]);
+        const teams = await tRes.json();
+        const stats = await sRes.json();
+        teamsCache = teams;
+
+        const ptsMap = {};
+        stats.forEach(s => { ptsMap[s.team_name] = s.points; });
+
+        const sel = document.getElementById('score-team');
+        if (sel) {
+          const cur = sel.value;
+          sel.innerHTML = '<option value="">Select Team...</option>' +
+            teams.map(t => `<option value="${t.team_name}" ${t.team_name === cur ? 'selected' : ''}>${t.team_name.toUpperCase()} (${t.game})</option>`).join('');
+        }
+
+        const tbody = document.getElementById('teams-table-body');
+        if (!tbody) return;
+        if (!teams.length) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-12 text-center text-text-dim text-xs font-black uppercase opacity-30 italic">No squads registered</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = teams.map(t => {
+          const gameClass = t.game === 'BGMI' ? 'text-gaming-red border-gaming-red/30 bg-gaming-red/5' : 'text-gaming-cyan border-gaming-cyan/30 bg-gaming-cyan/5';
+          return `<tr class="border-b border-border-c hover:bg-white/5 transition-colors">
+            <td class="p-4 text-white text-sm font-black italic tracking-tight uppercase">${t.team_name}</td>
+            <td class="p-4 text-text-dim text-xs font-bold">${t.captain_name || '—'}</td>
+            <td class="p-4"><span class="text-[9px] font-black uppercase px-2 py-1 rounded border ${gameClass}">${t.game}</span></td>
+            <td class="p-4 text-center font-black text-sm text-gaming-red italic">${ptsMap[t.team_name] || 0}</td>
+            <td class="p-4 text-right">
+              <button onclick="editTeam(${t.id})" class="text-gaming-cyan font-black text-[10px] uppercase mr-3 hover:text-white transition-colors">Edit</button>
+              <button onclick="deleteTeam(${t.id},'${t.team_name.replace(/'/g,"\\'")}')" class="text-red-500 font-black text-[10px] uppercase hover:text-red-300 transition-colors">Del</button>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch(e) { showToast('Teams load failed', 'error'); }
+    }
+
+    function toggleTeamForm(show) {
+      const el = document.getElementById('team-form-container');
+      if (show === false) { el.classList.add('hidden'); return; }
+      el.classList.toggle('hidden');
+      if (!el.classList.contains('hidden')) {
+        document.getElementById('edit-team-id').value = '';
+        document.getElementById('team-name-input').value = '';
+        document.getElementById('captain-name-input').value = '';
+        document.getElementById('team-game-input').value = 'BGMI';
+        document.getElementById('team-form-title').textContent = 'Add Team';
+      }
+    }
+
+    function editTeam(id) {
+      const t = teamsCache.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('edit-team-id').value = id;
+      document.getElementById('team-name-input').value = t.team_name;
+      document.getElementById('captain-name-input').value = t.captain_name || '';
+      document.getElementById('team-game-input').value = t.game;
+      document.getElementById('team-form-title').textContent = 'Edit Squad Entry';
+      document.getElementById('team-form-container').classList.remove('hidden');
+      document.getElementById('team-form-container').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function saveTeam() {
+      const id   = document.getElementById('edit-team-id').value;
+      const body = {
+        team_name:    document.getElementById('team-name-input').value.trim(),
+        captain_name: document.getElementById('captain-name-input').value.trim(),
+        game:         document.getElementById('team-game-input').value
+      };
+      if (!body.team_name) { showToast('Team name required', 'error'); return; }
+      try {
+        const res = id ? await apiPut(`/api/teams/${id}`, body) : await apiPost('/api/teams', body);
+        if (res.success) {
+          showToast(id ? '✓ Updated' : '✓ Added', 'success');
+          toggleTeamForm(false);
+          loadTeams();
+        } else showToast(res.message || 'Error saving team', 'error');
+      } catch(e) { showToast('Network failure', 'error'); }
+    }
+
+    async function deleteTeam(id, name) {
+      if (!confirm(`Permanently delete squad "${name}"?`)) return;
+      try {
+        const res = await apiDelete(`/api/teams/${id}`);
+        if (res.success) { showToast('Deleted', 'info'); loadTeams(); }
+      } catch(e) { showToast('Error', 'error'); }
+    }
+
+    // ──────────────────────────────────────────
+    // Schedule CRUD (Section 9.4)
+    // ──────────────────────────────────────────
+    let scheduleCache = [];
+    async function loadSchedule() {
+      try {
+        const res = await fetch('/api/schedule');
+        const data = await res.json();
+        scheduleCache = data;
+        const tbody = document.getElementById('schedule-table-body');
+        if (!data.length) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-12 text-center text-text-dim text-xs font-black uppercase opacity-30 italic">No matches scheduled</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data.map(m => {
+          const gameClass = m.game === 'BGMI' ? 'text-gaming-red' : 'text-gaming-cyan';
+          const statusOpts = ['Upcoming','Live','Finished'].map(s =>
+            `<option value="${s}" ${s === m.status ? 'selected' : ''}>${s}</option>`).join('');
+          return `<tr class="border-b border-border-c hover:bg-white/5 transition-colors">
+            <td class="p-4 font-black text-text-dim text-xs italic tracking-tighter">#${m.match_number}</td>
+            <td class="p-4 font-black text-xs uppercase italic ${gameClass}">${m.game}</td>
+            <td class="p-4 text-xs font-bold text-slate-300">${m.map_name}</td>
+            <td class="p-4 text-xs font-bold text-text-dim uppercase tracking-tighter">${m.start_time}</td>
+            <td class="p-4">
+              <select onchange="updateScheduleStatus(${m.id}, this.value)"
+                class="bg-black border border-border-c rounded-lg px-2 py-1 text-xs font-black outline-none focus:border-primary-red transition-colors uppercase italic cursor-pointer">
+                ${statusOpts}
+              </select>
+            </td>
+            <td class="p-4 text-right">
+              <button onclick="editSchedule(${m.id})" class="text-gaming-cyan font-black text-[10px] uppercase mr-3">Edit</button>
+              <button onclick="deleteSchedule(${m.id})" class="text-red-500 font-black text-[10px] uppercase hover:text-red-400">Del</button>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch(e) { showToast('Schedule load failed', 'error'); }
+    }
+
+    async function updateScheduleStatus(id, status) {
+      const m = scheduleCache.find(x => x.id === id);
+      if (!m) return;
+      try {
+        await apiPut(`/api/schedule/${id}`, { ...m, status });
+        scheduleCache = scheduleCache.map(x => x.id === id ? {...x, status} : x);
+        showToast('✓ Match Status Updated', 'success');
+      } catch(e) { showToast('Update error', 'error'); }
+    }
+
+    function toggleScheduleForm(show) {
+      const el = document.getElementById('schedule-form-container');
+      if (show === false) { el.classList.add('hidden'); return; }
+      el.classList.toggle('hidden');
+      if (!el.classList.contains('hidden')) {
+        document.getElementById('edit-schedule-id').value = '';
+        document.getElementById('sched-match-num').value = '';
+        document.getElementById('sched-game').value = 'BGMI';
+        document.getElementById('sched-map').value = '';
+        document.getElementById('sched-time').value = '';
+        document.getElementById('sched-status').value = 'Upcoming';
+        document.getElementById('schedule-form-title').textContent = 'Add Match Slot';
+      }
+    }
+
+    function editSchedule(id) {
+      const m = scheduleCache.find(x => x.id === id);
+      if (!m) return;
+      document.getElementById('edit-schedule-id').value = id;
+      document.getElementById('sched-match-num').value = m.match_number;
+      document.getElementById('sched-game').value = m.game;
+      document.getElementById('sched-map').value = m.map_name;
+      document.getElementById('sched-time').value = m.start_time;
+      document.getElementById('sched-status').value = m.status;
+      document.getElementById('schedule-form-title').textContent = 'Edit Match Slot';
+      document.getElementById('schedule-form-container').classList.remove('hidden');
+      document.getElementById('schedule-form-container').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function saveSchedule() {
+      const id   = document.getElementById('edit-schedule-id').value;
+      const body = {
+        match_number: parseInt(document.getElementById('sched-match-num').value),
+        game:         document.getElementById('sched-game').value,
+        map_name:     document.getElementById('sched-map').value.trim(),
+        start_time:   document.getElementById('sched-time').value.trim(),
+        status:       document.getElementById('sched-status').value
+      };
+      if (!body.map_name || !body.start_time) { showToast('Required fields missing', 'error'); return; }
+      try {
+        const res = id ? await apiPut(`/api/schedule/${id}`, body) : await apiPost('/api/schedule', body);
+        if (res.success) {
+          showToast(id ? '✓ Match Slot Updated' : '✓ Slot Created', 'success');
+          toggleScheduleForm(false);
+          loadSchedule();
+        } else showToast(res.message || 'Error', 'error');
+      } catch(e) { showToast('Connection failure', 'error'); }
+    }
+
+    async function deleteSchedule(id) {
+      if (!confirm('Permanently remove this match slot?')) return;
+      try {
+        const res = await apiDelete(`/api/schedule/${id}`);
+        if (res.success) { showToast('Match deleted', 'info'); loadSchedule(); }
+      } catch(e) { showToast('Error', 'error'); }
+    }
+
+    // ──────────────────────────────────────────
+    // Audit Logs (Section 9.4)
+    // ──────────────────────────────────────────
+    async function loadLogs() {
+      try {
+        const res = await fetch('/api/logs');
+        const data = await res.json();
+        const tbody = document.getElementById('logs-table-body');
+        if (!data.length) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-12 text-center text-text-dim text-xs font-black uppercase opacity-30 italic">No submissions yet</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data.map(l => {
+          const time = l.timestamp ? l.timestamp.substring(11, 16) : '—';
+          return `<tr class="border-b border-border-c transition-colors">
+            <td class="p-4 text-text-dim font-bold">${time}</td>
+            <td class="p-4 text-primary-red font-black italic tracking-tighter">#${l.match_number}</td>
+            <td class="p-4 text-white font-black italic uppercase">${l.team_name}</td>
+            <td class="p-4 text-center text-text-dim">${l.kills}</td>
+            <td class="p-4 text-center text-slate-300 font-black italic">#${l.placement}</td>
+            <td class="p-4 text-center font-black text-sm text-gaming-red italic">${l.points}</td>
+            <td class="p-4 text-right">
+                <button onclick="deleteLog(${l.id})" class="text-red-500/50 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch(e) { showToast('Audit logs load failed', 'error'); }
+    }
+
+    async function deleteLog(id) {
+        if (!confirm('Are you sure you want to delete this match record? Note: You will need to click [SYNC STANDINGS] in settings to update the leaderboard after deletion.')) return;
+        try {
+            const res = await apiDelete(`/api/logs/${id}`);
+            if (res.success) {
+                showToast('Record deleted', 'info');
+                loadLogs();
+            }
+        } catch(e) { showToast('Delete error', 'error'); }
+    }
+
+    // ──────────────────────────────────────────
+    // Global Settings (Section 9.4)
+    // ──────────────────────────────────────────
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        const d = await res.json();
+        document.getElementById('s-tournament-name').value  = d.tournament_name || '';
+        document.getElementById('s-game-mode').value        = d.game_mode        || 'BGMI';
+        document.getElementById('s-map-name').value         = d.map_name         || '';
+        document.getElementById('s-match-number').value     = d.match_number     || '1';
+        document.getElementById('s-num-teams').value        = d.num_teams        || '18';
+        document.getElementById('s-next-match').value       = d.next_match       || '';
+        document.getElementById('s-match-status').value     = d.match_status     || 'Upcoming';
+        document.getElementById('s-stream-mode').value      = d.stream_mode      || 'upcoming';
+        document.getElementById('s-break-message').value    = d.break_message    || '';
+        document.getElementById('s-youtube-url').value      = d.youtube_url      || '';
+        document.getElementById('s-registration-url').value = d.registration_url || '';
+
+        // Pre-fill score match field if empty or matches
+        const mn = document.getElementById('score-match-num');
+        if (mn) mn.value = d.match_number || '1';
+        
+        // Sync quick controls
+        document.getElementById('ctrl-stream-mode').value  = d.stream_mode || 'upcoming';
+        document.getElementById('ctrl-match-status').value = d.match_status || 'Upcoming';
+        document.getElementById('ctrl-break-msg').value    = d.break_message || '';
+
+      } catch(e) { showToast('Settings load failed', 'error'); }
+    }
+
+    async function saveSettings() {
+      const body = {
+        tournament_name:  document.getElementById('s-tournament-name').value.trim(),
+        game_mode:        document.getElementById('s-game-mode').value,
+        map_name:         document.getElementById('s-map-name').value.trim(),
+        match_number:     document.getElementById('s-match-number').value,
+        num_teams:        document.getElementById('s-num-teams').value,
+        next_match:       document.getElementById('s-next-match').value.trim(),
+        match_status:     document.getElementById('s-match-status').value,
+        stream_mode:      document.getElementById('s-stream-mode').value,
+        break_message:    document.getElementById('s-break-message').value.trim(),
+        youtube_url:      document.getElementById('s-youtube-url').value.trim(),
+        registration_url: document.getElementById('s-registration-url').value.trim(),
+      };
+      try {
+        const res = await apiPost('/api/settings', body);
+        if (res.success) showToast('✓ Settings Saved! Live View updates soon.', 'success');
+        else showToast(res.message || 'Save error', 'error');
+      } catch(e) { showToast('Network disconnect', 'error'); }
+    }
+
+    // ──────────────────────────────────────────
+    // Init (Section 9.4)
+    // ──────────────────────────────────────────
+    (async function init() {
+      await loadSettings();
+      await loadTeams();
+      loadMiniLeaderboard();
+      showSection('dashboard');
+    })();
+
+    // Reveal animation observer
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

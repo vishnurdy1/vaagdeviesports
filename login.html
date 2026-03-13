@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login | TECHNOCRAFT × VAAGTARANG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'primary-red': '#e41c1c',
+            'accent-blue': '#0fd1e4',
+            'bg-dark': '#000000',
+            'card-dark': '#080808',
+            'border-c': '#2a1111',
+            'text-dim': '#8a7d7d'
+          },
+          fontFamily: { display: ['Space Grotesk', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Space Grotesk', sans-serif; background-color: #000000; color: #f2f2f2; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #2a1111; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #e41c1c; }
+  </style>
+</head>
+<body class="antialiased min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-card-dark border border-border-c rounded-2xl p-10 shadow-2xl">
+        
+        <div class="flex flex-col items-center mb-8">
+            <!-- Stacked Branding - Medium size (Section 3) -->
+            <div class="leading-tight text-center">
+              <div class="text-2xl font-black text-white uppercase italic tracking-tighter">VAAGDEVI</div>
+              <div class="text-xl font-black text-primary-red uppercase italic tracking-widest">ESPORTS</div>
+            </div>
+            <p class="text-text-dim text-[10px] font-black uppercase tracking-widest text-center mt-4">
+                VAAGDEVI COLLEGES · ARENA GAMING CLUB
+            </p>
+        </div>
+
+        <div class="my-6"></div>
+        
+        {% if error %}
+        <div class="bg-red-900/12 border border-red-800/40 text-red-400 text-xs font-bold px-4 py-3 rounded-xl mb-6 text-center uppercase tracking-widest">
+          {{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="POST" action="/login" class="space-y-6">
+            <div>
+                <label class="block text-[10px] font-black text-text-dim uppercase tracking-widest mb-2">Master Password</label>
+                <input type="password" name="password" required autofocus placeholder="••••••••"
+                    class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors shadow-inner" />
+            </div>
+
+            <button type="submit" class="w-full bg-primary-red hover:bg-red-700 text-white font-black uppercase px-6 py-4 rounded-xl transition-all shadow-lg shadow-primary-red/20 tracking-widest active:scale-[0.98]">
+                ENTER CONTROL PANEL
+            </button>
+        </form>
+        
+        <div class="mt-8 pt-6 border-t border-border-c text-center">
+            <a href="/" class="text-[10px] text-text-dim hover:text-white transition-colors uppercase tracking-widest font-black flex items-center justify-center gap-2 group">
+                <span class="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">west</span> ← Back to Home
+            </a>
+        </div>
+    </div>
+</body>
+</html>

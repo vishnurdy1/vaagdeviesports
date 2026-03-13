@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Dashboard | TECHNOCRAFT × VAAGTARANG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'gaming-red': '#FF2E63',
+            'gaming-cyan': '#08D9D6',
+            'dark-bg': '#0A0A0F',
+            'card-dark': '#151824',
+            'border-c': '#1F2330',
+            'text-dim': '#9CA3AF'
+          },
+          fontFamily: { display: ['Space Grotesk', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Space Grotesk', sans-serif; background-color: #0A0A0F; color: #f2f2f2; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0A0A0F; }
+    ::-webkit-scrollbar-thumb { background: #1F2330; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #FF2E63; }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+    .live-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: #FF2E63;
+      border-radius: 50%;
+      animation: pulse-dot 1.4s ease-in-out infinite;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+
+    @keyframes pulse-border-red {
+      0%, 100% { border-color: rgba(255, 46, 99, 0.2); }
+      50%       { border-color: rgba(255, 46, 99, 0.7); }
+    }
+    .break-mode-wrapper {
+      border: 1px solid rgba(255, 46, 99, 0.2);
+      border-radius: 1rem;
+      animation: pulse-border-red 2s ease-in-out infinite;
+    }
+
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      padding: 12px 20px; border-radius: 12px; font-weight: 700;
+      font-size: 0.8rem; opacity: 0; transform: translateY(8px);
+      transition: all 0.3s ease; pointer-events: none; max-width: 300px;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success { background: rgba(8, 217, 214, 0.08); border: 1px solid rgba(8, 217, 214, 0.25); color: #08D9D6; }
+    #toast.error   { background: rgba(255, 46, 99, 0.12); border: 1px solid rgba(255, 46, 99, 0.4);  color: #FF2E63; }
+    #toast.info    { background: rgba(8, 217, 214, 0.08); border: 1px solid rgba(8, 217, 214, 0.3); color: #08D9D6; }
+
+    .glass-card {
+      background: rgba(21, 24, 36, 0.7);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid #1F2330;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    .status-card {
+      background: rgba(21, 24, 36, 0.4);
+      backdrop-filter: blur(10px);
+      border: 1px solid #1F2330;
+      transition: all 0.3s ease;
+    }
+    .status-card:hover {
+      background: rgba(21, 24, 36, 0.6);
+      border-color: rgba(255, 46, 99, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* ── REVEAL ANIMATIONS ── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: 0.1s; }
+    .reveal-d2 { transition-delay: 0.2s; }
+    .reveal-d3 { transition-delay: 0.3s; }
+  </style>
+</head>
+<body class="antialiased font-display">
+
+  <div id="toast"></div>
+
+  <header class="sticky top-0 z-50 border-b border-border-c bg-black/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <!-- Small stacked logo -->
+      <!-- Logo -->
+      <a href="/" class="flex items-center">
+        <span class="text-xl font-black italic tracking-tighter text-white uppercase">VAAGDEVI <span class="text-gaming-red">ESPORTS</span></span>
+      </a>
+      <!-- Nav tabs -->
+      <nav class="flex gap-6 text-[10px] font-black uppercase tracking-widest">
+        <button onclick="showSection('dashboard')" data-tab="dashboard" class="nav-tab text-white">DASHBOARD</button>
+        <button onclick="showSection('history')" data-tab="history" class="nav-tab text-text-dim hover:text-white transition-colors">HISTORY</button>
+        <button onclick="showSection('schedule')" data-tab="schedule" class="nav-tab text-text-dim hover:text-white transition-colors">SCHEDULE</button>
+        <button onclick="showSection('teams')" data-tab="teams" class="nav-tab text-text-dim hover:text-white transition-colors">TEAMS</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 lg:p-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- LEFT COLUMN -->
+      <div class="lg:col-span-8 space-y-6 reveal">
+        
+        <!-- Dashboard View -->
+        <div id="section-dashboard" class="space-y-6">
+          <!-- Stream Container -->
+          <div id="stream-container" class="aspect-video bg-card-dark border border-border-c rounded-2xl overflow-hidden shadow-2xl reveal reveal-d1">
+            <!-- Rendered via JS -->
+          </div>
+
+          <!-- Match Status Bar -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center reveal reveal-d2">
+            <div class="status-card p-4 rounded-xl">
+              <span class="text-[9px] uppercase font-black text-text-dim block mb-1">Now Playing</span>
+              <span id="status-game" class="font-black italic text-sm text-gaming-red">--</span>
+            </div>
+            <div class="status-card p-4 rounded-xl">
+              <span class="text-[9px] uppercase font-black text-text-dim block mb-1">Map</span>
+              <span id="status-map" class="font-black text-sm text-white">--</span>
+            </div>
+            <div class="status-card p-4 rounded-xl">
+              <span class="text-[9px] uppercase font-black text-text-dim block mb-1">Match #</span>
+              <span id="status-match-num" class="font-black text-sm text-white">#--</span>
+            </div>
+            <div class="status-card p-4 rounded-xl">
+              <span class="text-[9px] uppercase font-black text-text-dim block mb-1">Status</span>
+              <span id="status-value" class="font-black text-sm text-white">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Match History View (New) -->
+        <div id="section-history" class="hidden space-y-6">
+          <div class="bg-card-dark border border-border-c rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="font-black uppercase text-xl italic text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary-red">history</span>
+                Match Performance History
+              </h2>
+              <select id="history-match-select" onchange="renderHistoryForMatch(this.value)" 
+                class="bg-black border border-border-c rounded-xl px-4 py-2 text-xs font-black uppercase italic outline-none focus:border-primary-red transition-all">
+                <option value="">Select Match...</option>
+              </select>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+                    <th class="p-4">Rank</th>
+                    <th class="p-4">Team</th>
+                    <th class="p-4 text-center">Match Kills</th>
+                    <th class="p-4 text-center">Placement</th>
+                    <th class="p-4 text-right">Match Pts</th>
+                  </tr>
+                </thead>
+                <tbody id="history-table-body" class="divide-y divide-border-c font-bold uppercase italic text-sm">
+                  <tr><td colspan="5" class="p-12 text-center text-text-dim text-xs font-black opacity-30 italic">Select a match to view results</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule View -->
+        <div id="section-schedule" class="hidden bg-card-dark border border-border-c rounded-2xl overflow-hidden">
+          <div class="p-5 border-b border-border-c font-black uppercase text-sm italic">Match Schedule</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+                  <th class="p-4">Match</th>
+                  <th class="p-4">Game</th>
+                  <th class="p-4">Map</th>
+                  <th class="p-4">Time</th>
+                  <th class="p-4 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-list" class="divide-y divide-border-c"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Teams View -->
+        <div id="section-teams" class="hidden space-y-6">
+          <!-- BGMI -->
+          <div class="bg-card-dark border border-border-c rounded-2xl overflow-hidden">
+            <div class="p-5 border-b border-border-c flex items-center gap-2">
+              <span class="font-black uppercase text-sm italic text-gaming-red">BGMI</span>
+              <span class="text-text-dim font-black text-xs">Teams</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                  <thead><tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+                    <th class="p-4">#</th><th class="p-4">Team</th><th class="p-4 text-center">Kills</th><th class="p-4 text-center">Pts</th>
+                  </tr></thead>
+                  <tbody id="bgmi-teams-body" class="divide-y divide-border-c"></tbody>
+                </table>
+            </div>
+          </div>
+          <!-- Free Fire -->
+          <div class="bg-card-dark border border-border-c rounded-2xl overflow-hidden">
+            <div class="p-5 border-b border-border-c flex items-center gap-2">
+              <span class="font-black uppercase text-sm italic text-gaming-cyan">Free Fire</span>
+              <span class="text-text-dim font-black text-xs">Teams</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                  <thead><tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+                    <th class="p-4">#</th><th class="p-4">Team</th><th class="p-4 text-center">Kills</th><th class="p-4 text-center">Pts</th>
+                  </tr></thead>
+                  <tbody id="ff-teams-body" class="divide-y divide-border-c"></tbody>
+                </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN (Leaderboard) -->
+      <div class="lg:col-span-4 glass-card rounded-2xl flex flex-col sticky top-20 h-fit max-h-[calc(100vh-120px)] shadow-2xl overflow-hidden reveal reveal-d3">
+        <div class="p-5 border-b border-border-c flex items-center justify-between">
+          <span class="font-black uppercase text-sm italic">Live Leaderboard</span>
+          <span id="refresh-countdown" class="text-[9px] font-black text-text-dim opacity-50">10s</span>
+        </div>
+        <!-- Column headers -->
+        <div class="grid grid-cols-12 px-4 py-2 text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+          <span class="col-span-1">#</span>
+          <span class="col-span-5">Team</span>
+          <span class="col-span-3 text-center">Kills</span>
+          <span class="col-span-3 text-center">Pts</span>
+        </div>
+        <div id="leaderboard-body" class="flex-1 overflow-y-auto divide-y divide-border-c">
+            <!-- Rows injected here -->
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="mt-20 py-12 border-t border-border-c text-center">
+    <p class="text-xs font-bold uppercase tracking-widest opacity-40">© 2026 VAAGDEVI ESPORTS</p>
+    <a href="/login" class="inline-block mt-4 px-4 py-2 border border-border-c text-[10px] font-black uppercase tracking-[0.2em] text-text-dim hover:text-gaming-red hover:border-gaming-red transition-all rounded-lg">ADMIN LOGIN</a>
+  </footer>
+
+  <script>
+    // Helpers
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.className = 'show ' + type;
+      setTimeout(() => { t.className = ''; }, 3000);
+    }
+
+    function formatYoutubeUrl(url) {
+      if (!url || url.trim() === '') return '';
+      url = url.trim();
+      if (url.includes('/embed/')) return url;
+      const watchMatch = url.match(/[?&]v=([^&]+)/);
+      if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}?autoplay=1&mute=1`;
+      const shortMatch = url.match(/youtu\.be\/([^?]+)/);
+      if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}?autoplay=1&mute=1`;
+      return url;
+    }
+
+    // Rendering functions (Section 8.3)
+    function renderStream(settings) {
+      const cont = document.getElementById('stream-container');
+      const mode = settings.stream_mode || 'upcoming';
+      const rawUrl = settings.youtube_url || '';
+      const embedUrl = formatYoutubeUrl(rawUrl);
+      const nextMatch = settings.next_match || '—';
+      const breakMsg = settings.break_message || 'Stay tuned!';
+
+      if (mode === 'live' && embedUrl) {
+        cont.innerHTML = `<iframe class="w-full h-full" src="${embedUrl}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      } else if (mode === 'break') {
+        cont.innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10 break-mode-wrapper">
+            <div class="text-5xl mb-6">⏸</div>
+            <h2 class="text-3xl md:text-4xl font-black uppercase text-white mb-4">We'll Be Right Back</h2>
+            <p class="text-text-dim text-lg max-w-xs mb-6">${breakMsg}</p>
+            <div class="flex items-center gap-2 text-gaming-cyan font-bold text-sm">
+              <span class="material-symbols-outlined" style="font-size:16px">skip_next</span>
+              Next Up: ${nextMatch}
+            </div>
+          </div>`;
+      } else if (mode === 'offline') {
+        cont.innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10">
+            <div class="text-5xl mb-6">🏆</div>
+            <h2 class="text-3xl font-black uppercase text-white mb-4">Tournament Complete</h2>
+            <p class="text-text-dim">Thanks for watching! Check the final leaderboard.</p>
+          </div>`;
+      } else {
+        cont.innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10">
+            <div class="text-5xl mb-6">📡</div>
+            <h2 class="text-2xl font-black uppercase text-white mb-3 tracking-tighter italic">Stream Starting Soon</h2>
+            <p class="text-text-dim font-bold text-sm uppercase italic">TECHNOCRAFT × VAAGTARANG</p>
+            <p class="text-text-dim text-[10px] mt-2 uppercase font-black tracking-widest">Free Fire & BGMI · 14 March 2026</p>
+          </div>`;
+      }
+    }
+
+    function renderMatchStatus(settings) {
+      document.getElementById('status-game').textContent      = settings.game_mode    || '—';
+      document.getElementById('status-map').textContent       = settings.map_name     || '—';
+      document.getElementById('status-match-num').textContent = '#' + (settings.match_number || '—');
+
+      const statusEl = document.getElementById('status-value');
+      const s = settings.match_status || 'Upcoming';
+      if (s === 'LIVE') {
+        statusEl.innerHTML = `<span class="live-dot"></span><span class="text-gaming-red font-black">LIVE</span>`;
+      } else if (s === 'Upcoming') {
+        statusEl.innerHTML = `<span class="text-gaming-cyan font-black tracking-widest">UPCOMING</span>`;
+      } else if (s === 'Finished') {
+        statusEl.innerHTML = `<span class="text-text-dim font-black tracking-widest">FINISHED</span>`;
+      } else if (s === 'Break') {
+        statusEl.innerHTML = `<span class="text-gaming-cyan font-black tracking-widest opacity-70">BREAK</span>`;
+      } else {
+        statusEl.textContent = s;
+      }
+    }
+
+    function renderLeaderboard(data) {
+      const el = document.getElementById('leaderboard-body');
+      if (!data.length) {
+        el.innerHTML = '<div class="p-8 text-center text-text-dim text-sm font-bold">No scores yet</div>';
+        return;
+      }
+      el.innerHTML = data.map(t => {
+        let rankColor = 'text-text-dim';
+        let rowBg = '';
+        if (t.rank === 1) { rankColor = 'text-yellow-400'; rowBg = 'bg-yellow-400/5'; }
+        else if (t.rank === 2) { rankColor = 'text-slate-300'; rowBg = 'bg-white/5'; }
+        else if (t.rank === 3) { rankColor = 'text-amber-600'; rowBg = 'bg-amber-900/5'; }
+        return `
+          <div class="grid grid-cols-12 items-center px-4 py-3 ${rowBg} hover:bg-white/5 transition-colors">
+            <span class="col-span-1 font-black text-xs ${rankColor}">${t.rank}</span>
+            <span class="col-span-5 font-bold text-xs truncate ${t.rank <= 3 ? 'text-white' : 'text-slate-300'} uppercase italic">${t.team_name}</span>
+            <span class="col-span-3 text-center text-xs text-text-dim font-bold">${t.kills}</span>
+            <span class="col-span-3 text-center text-xs font-black ${rankColor}">${t.points}</span>
+          </div>`;
+      }).join('');
+    }
+
+    async function fetchSchedule() {
+      try {
+        const res = await fetch('/api/schedule');
+        const data = await res.json();
+        const el = document.getElementById('schedule-list');
+        if (!data.length) {
+          el.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-text-dim text-sm font-bold uppercase tracking-widest">No matches scheduled yet</td></tr>';
+          return;
+        }
+        el.innerHTML = data.map(m => {
+          const statusClass = m.status === 'Live' ? 'text-gaming-red bg-gaming-red/10 border-gaming-red/30'
+            : m.status === 'Finished' ? 'text-text-dim bg-white/5 border-white/10'
+            : 'text-gaming-cyan bg-gaming-cyan/10 border-gaming-cyan/30';
+          const gameClass = m.game === 'BGMI' ? 'text-gaming-red' : 'text-gaming-cyan';
+          const liveDot = m.status === 'Live' ? '<span class="live-dot mr-1"></span>' : '';
+          return `
+            <tr class="border-b border-border-c hover:bg-white/5 transition-colors">
+              <td class="p-4 font-black italic text-text-dim text-sm tracking-tighter">#${m.match_number}</td>
+              <td class="p-4 font-black text-sm uppercase italic ${gameClass}">${m.game}</td>
+              <td class="p-4 text-sm text-slate-300 font-bold">${m.map_name}</td>
+              <td class="p-4 text-xs text-text-dim font-bold uppercase">${m.start_time}</td>
+              <td class="p-4 text-right">
+                <span class="text-[9px] font-black uppercase px-2 py-1 rounded border ${statusClass}">
+                  ${liveDot}${m.status}
+                </span>
+              </td>
+            </tr>`;
+        }).join('');
+      } catch(e) { showToast('Failed to load schedule', 'error'); }
+    }
+
+    async function fetchTeamStats() {
+      try {
+        const res = await fetch('/api/team_stats');
+        const data = await res.json();
+        const bgmiTeams = data.filter(t => t.game === 'BGMI');
+        const ffTeams = data.filter(t => t.game === 'Free Fire');
+
+        function renderTeamTable(teams, color) {
+          if (!teams.length) return '<tr><td colspan="4" class="p-6 text-center text-text-dim text-xs font-black uppercase italic">No teams registered</td></tr>';
+          return teams.map((t, i) => `
+            <tr class="border-b border-border-c hover:bg-white/5 transition-colors">
+              <td class="p-4 font-black text-xs text-text-dim">${i+1}</td>
+              <td class="p-4 font-bold text-xs text-white uppercase italic tracking-tight">${t.team_name}</td>
+              <td class="p-4 text-center text-xs text-text-dim font-bold">${t.kills}</td>
+              <td class="p-4 text-center font-black text-sm ${color}">${t.points}</td>
+            </tr>`).join('');
+        }
+
+        document.getElementById('bgmi-teams-body').innerHTML = renderTeamTable(bgmiTeams, 'text-gaming-red');
+        document.getElementById('ff-teams-body').innerHTML   = renderTeamTable(ffTeams, 'text-gaming-cyan');
+      } catch(e) { showToast('Failed to load teams', 'error'); }
+    }
+
+    // Refresh controls
+    let refreshCountdown = 10;
+
+    async function refreshAll() {
+      try {
+        const [sRes, lRes] = await Promise.all([fetch('/api/settings'), fetch('/api/leaderboard')]);
+        const settings = await sRes.json();
+        const lb       = await lRes.json();
+        renderStream(settings);
+        renderMatchStatus(settings);
+        renderLeaderboard(lb);
+        if (settings.tournament_name) document.title = settings.tournament_name + ' | Dashboard';
+      } catch(e) { console.error('Refresh failed', e); }
+    }
+
+    function startCountdown() {
+      const el = document.getElementById('refresh-countdown');
+      setInterval(() => {
+        refreshCountdown--;
+        if (refreshCountdown <= 0) {
+          refreshCountdown = 10;
+          refreshAll();
+        }
+        if (el) el.textContent = refreshCountdown + 's';
+      }, 1000);
+    }
+
+    function showSection(name) {
+      ['dashboard', 'schedule', 'teams', 'history'].forEach(s => {
+        const el = document.getElementById('section-' + s);
+        if (el) el.classList.toggle('hidden', s !== name);
+      });
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        const active = btn.dataset.tab === name;
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('text-text-dim', !active);
+      });
+      if (name === 'schedule') fetchSchedule();
+      if (name === 'teams')    fetchTeamStats();
+      if (name === 'history')  fetchHistory();
+    }
+
+    let allLogs = [];
+    async function fetchHistory() {
+      try {
+        const res = await fetch('/api/logs');
+        allLogs = await res.json();
+        const matches = [...new Set(allLogs.map(l => l.match_number))].sort((a,b) => b-a);
+        const sel = document.getElementById('history-match-select');
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">Select Match...</option>' + 
+          matches.map(m => `<option value="${m}" ${m == cur ? 'selected' : ''}>Match #${m}</option>`).join('');
+        
+        if (cur) renderHistoryForMatch(cur);
+      } catch(e) { showToast('Failed to load history', 'error'); }
+    }
+
+    function renderHistoryForMatch(matchNum) {
+      if (!matchNum) return;
+      const filtered = allLogs.filter(l => l.match_number == matchNum).sort((a,b) => b.points - a.points);
+      const tbody = document.getElementById('history-table-body');
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-12 text-center text-text-dim text-xs font-black opacity-30">No data found for this match</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map((l, idx) => `
+        <tr class="border-b border-border-c hover:bg-white/5 transition-colors">
+          <td class="p-4 font-black italic text-text-dim italic">#${idx + 1}</td>
+          <td class="p-4 font-black italic text-white uppercase truncate">${l.team_name}</td>
+          <td class="p-4 text-center text-text-dim font-bold">${l.kills}</td>
+          <td class="p-4 text-center text-slate-300 font-bold">#${l.placement}</td>
+          <td class="p-4 text-right font-black text-gaming-red italic text-base">${l.points}</td>
+        </tr>`).join('');
+    }
+
+    // Init
+    refreshAll();
+    startCountdown();
+    showSection('dashboard');
+
+    // Reveal animation observer
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
