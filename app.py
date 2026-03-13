@@ -112,7 +112,7 @@ def init_db():
 
     # Seed default settings
     default_settings = {
-        "tournament_name": "TECHNOCRAFT × VAAGTARANG",
+        "tournament_name": "VAAGDEVI ESPORTS",
         "game_mode":       "BGMI",
         "map_name":       "Erangel",
         "match_number":   "1",
@@ -122,7 +122,7 @@ def init_db():
         "youtube_url":     "",
         "stream_mode":     "upcoming",
         "break_message":   "Stay tuned! Next match loading...",
-        "registration_url": "https://docs.google.com/forms"
+        "registration_url": "https://docs.google.com/forms/d/e/1FAIpQLSfI9d59zR6A4m84xC7Mr5-YYVhHyUd33aNUgapUxJ6IWSmTEA/viewform"
     }
     for k, v in default_settings.items():
         cur.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (k, v))
@@ -473,6 +473,7 @@ def api_settings():
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
     data = request.get_json()
+    print(f"[LOG] Received settings update: {data}")
     for k, v in data.items():
         conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (k, str(v)))
     
@@ -484,8 +485,10 @@ def api_settings():
 # ─────────────────────────────────────────
 #  Entry point
 # ─────────────────────────────────────────
+# Run initialization here so it works on deployment servers (Gunicorn)
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     print("\n[+] TECHNOCRAFT x VAAGTARANG Esports Server running!")
     print("   Home      -> http://localhost:5000/")
     print("   Tournament-> http://localhost:5000/tournament")
