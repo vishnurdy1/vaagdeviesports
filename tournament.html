@@ -310,6 +310,8 @@
     }
 
     // Rendering functions (Section 8.3)
+    let lastStreamState = { mode: '', url: '' };
+
     function renderStream(settings) {
       const cont = document.getElementById('stream-container');
       const mode = settings.stream_mode || 'upcoming';
@@ -318,11 +320,17 @@
       const nextMatch = settings.next_match || '—';
       const breakMsg = settings.break_message || 'Stay tuned!';
 
+      // Only re-render if state changed
+      if (mode === lastStreamState.mode && embedUrl === lastStreamState.url) return;
+      lastStreamState = { mode, url: embedUrl };
+
+      console.log('Rendering stream:', { mode, embedUrl });
+
       if (mode === 'live' && embedUrl) {
-        cont.innerHTML = `<iframe class="w-full h-full" src="${embedUrl}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        cont.innerHTML = `<iframe class="w-full h-full" src="${embedUrl}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
       } else if (mode === 'break') {
         cont.innerHTML = `
-          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10 break-mode-wrapper">
+          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10 break-mode-wrapper bg-black">
             <div class="text-5xl mb-6">⏸</div>
             <h2 class="text-3xl md:text-4xl font-black uppercase text-white mb-4">We'll Be Right Back</h2>
             <p class="text-text-dim text-lg max-w-xs mb-6">${breakMsg}</p>
@@ -333,14 +341,14 @@
           </div>`;
       } else if (mode === 'offline') {
         cont.innerHTML = `
-          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10">
+          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10 bg-black">
             <div class="text-5xl mb-6">🏆</div>
             <h2 class="text-3xl font-black uppercase text-white mb-4">Tournament Complete</h2>
             <p class="text-text-dim">Thanks for watching! Check the final leaderboard.</p>
           </div>`;
       } else {
         cont.innerHTML = `
-          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10">
+          <div class="w-full h-full flex flex-col items-center justify-center text-center p-10 bg-black">
             <div class="text-5xl mb-6">📡</div>
             <h2 class="text-2xl font-black uppercase text-white mb-3 tracking-tighter italic">Stream Starting Soon</h2>
             <p class="text-text-dim font-bold text-sm uppercase italic">TECHNOCRAFT × VAAGTARANG</p>
@@ -538,4 +546,3 @@
   </script>
 </body>
 </html>
-
