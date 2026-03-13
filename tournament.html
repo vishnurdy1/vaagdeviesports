@@ -314,7 +314,7 @@
 
     function renderStream(settings) {
       const cont = document.getElementById('stream-container');
-      const mode = settings.stream_mode || 'upcoming';
+      const mode = (settings.stream_mode || 'upcoming').toLowerCase().trim();
       const rawUrl = settings.youtube_url || '';
       const embedUrl = formatYoutubeUrl(rawUrl);
       const nextMatch = settings.next_match || '—';
@@ -363,14 +363,14 @@
       document.getElementById('status-match-num').textContent = '#' + (settings.match_number || '—');
 
       const statusEl = document.getElementById('status-value');
-      const s = settings.match_status || 'Upcoming';
+      const s = (settings.match_status || 'upcoming').toUpperCase().trim();
       if (s === 'LIVE') {
         statusEl.innerHTML = `<span class="live-dot"></span><span class="text-gaming-red font-black">LIVE</span>`;
-      } else if (s === 'Upcoming') {
+      } else if (s === 'UPCOMING') {
         statusEl.innerHTML = `<span class="text-gaming-cyan font-black tracking-widest">UPCOMING</span>`;
-      } else if (s === 'Finished') {
+      } else if (s === 'FINISHED') {
         statusEl.innerHTML = `<span class="text-text-dim font-black tracking-widest">FINISHED</span>`;
-      } else if (s === 'Break') {
+      } else if (s === 'BREAK') {
         statusEl.innerHTML = `<span class="text-gaming-cyan font-black tracking-widest opacity-70">BREAK</span>`;
       } else {
         statusEl.textContent = s;
@@ -461,6 +461,7 @@
         const [sRes, lRes] = await Promise.all([fetch('/api/settings'), fetch('/api/leaderboard')]);
         const settings = await sRes.json();
         const lb       = await lRes.json();
+        console.log('[DEBUG] Dashboard Settings:', settings);
         renderStream(settings);
         renderMatchStatus(settings);
         renderLeaderboard(lb);
