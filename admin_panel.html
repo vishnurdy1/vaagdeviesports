@@ -348,13 +348,18 @@
             <input type="text" id="sched-time" placeholder="10:00 AM"
               class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors">
           </div>
-          <div class="col-span-2">
+          <div class="col-span-1">
             <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Match Status</label>
             <select id="sched-status" class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red">
               <option value="Upcoming">Upcoming</option>
               <option value="Live">Live</option>
               <option value="Finished">Finished</option>
             </select>
+          </div>
+          <div class="col-span-1">
+            <label class="text-[9px] font-black uppercase tracking-wider text-text-dim block mb-1">Winner Team</label>
+            <input type="text" id="sched-winner" placeholder="Winner Team Name"
+              class="w-full bg-black border border-border-c rounded-xl p-4 text-white font-bold outline-none focus:border-primary-red transition-colors uppercase italic">
           </div>
         </div>
         <div class="flex gap-3">
@@ -373,6 +378,7 @@
                   <th class="p-4">Game</th>
                   <th class="p-4">Map</th>
                   <th class="p-4">Time</th>
+                  <th class="p-4">Winner</th>
                   <th class="p-4">Quick Status</th>
                   <th class="p-4 text-right">Actions</th>
                 </tr>
@@ -385,9 +391,25 @@
 
     <!-- SECTION: LOGS (Section 9.3) -->
     <section id="section-logs" class="hidden reveal">
-      <h1 class="text-3xl font-black uppercase italic text-white mb-2 tracking-tighter">Audit <span class="text-gaming-red">Logs</span></h1>
-      <p class="text-text-dim text-sm font-bold uppercase tracking-widest mb-8">Match submission trail</p>
-      <div class="bg-card-dark border border-border-c rounded-2xl overflow-hidden shadow-2xl">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-3xl font-black uppercase italic text-white mb-1 tracking-tighter">Activity <span class="text-gaming-red">Tracking</span></h1>
+          <p class="text-[10px] text-text-dim font-black uppercase tracking-widest italic opacity-60">Match submissions & System Audit</p>
+        </div>
+        <div class="flex bg-black/40 border border-border-c p-1 rounded-xl">
+          <button onclick="setLogView('match')" id="btn-view-match" 
+            class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-gaming-red text-white shadow-lg shadow-gaming-red/20">
+            Match Trail
+          </button>
+          <button onclick="setLogView('audit')" id="btn-view-audit" 
+            class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-text-dim hover:text-white">
+            System Audit
+          </button>
+        </div>
+      </div>
+
+      <!-- MATCH LOGS TABLE -->
+      <div id="view-match-logs" class="bg-card-dark border border-border-c rounded-2xl overflow-hidden shadow-2xl">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
@@ -401,7 +423,23 @@
                   <th class="p-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody id="logs-table-body" class="divide-y divide-border-c text-[11px] font-bold uppercase tracking-widest"></tbody>
+              <tbody id="logs-table-body" class="divide-y divide-border-c text-[11px] font-bold uppercase tracking-widest italic"></tbody>
+            </table>
+        </div>
+      </div>
+
+      <!-- SYSTEM AUDIT TABLE (Hidden by default) -->
+      <div id="view-audit-logs" class="hidden bg-card-dark border border-border-c rounded-2xl overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
+                  <th class="p-4">Timestamp</th>
+                  <th class="p-4">Action</th>
+                  <th class="p-4">Details / Metadata</th>
+                </tr>
+              </thead>
+              <tbody id="audit-table-body" class="divide-y divide-border-c text-[10px] font-bold uppercase tracking-widest italic"></tbody>
             </table>
         </div>
       </div>
@@ -875,6 +913,9 @@
             <td class="p-4 text-xs font-bold text-slate-300">${m.map_name}</td>
             <td class="p-4 text-xs font-bold text-text-dim uppercase tracking-tighter">${m.start_time}</td>
             <td class="p-4">
+              <span class="text-[10px] font-black text-gaming-cyan italic uppercase">${m.winner_team || '—'}</span>
+            </td>
+            <td class="p-4">
               <select onchange="updateScheduleStatus(${m.id}, this.value)"
                 class="bg-black border border-border-c rounded-lg px-2 py-1 text-xs font-black outline-none focus:border-primary-red transition-colors uppercase italic cursor-pointer">
                 ${statusOpts}
@@ -910,6 +951,7 @@
         document.getElementById('sched-map').value = '';
         document.getElementById('sched-time').value = '';
         document.getElementById('sched-status').value = 'Upcoming';
+        document.getElementById('sched-winner').value = '';
         document.getElementById('schedule-form-title').textContent = 'Add Match Slot';
       }
     }
@@ -923,6 +965,7 @@
       document.getElementById('sched-map').value = m.map_name;
       document.getElementById('sched-time').value = m.start_time;
       document.getElementById('sched-status').value = m.status;
+      document.getElementById('sched-winner').value = m.winner_team || '';
       document.getElementById('schedule-form-title').textContent = 'Edit Match Slot';
       document.getElementById('schedule-form-container').classList.remove('hidden');
       document.getElementById('schedule-form-container').scrollIntoView({ behavior: 'smooth' });
@@ -935,7 +978,8 @@
         game:         document.getElementById('sched-game').value,
         map_name:     document.getElementById('sched-map').value.trim(),
         start_time:   document.getElementById('sched-time').value.trim(),
-        status:       document.getElementById('sched-status').value
+        status:       document.getElementById('sched-status').value,
+        winner_team:  document.getElementById('sched-winner').value.trim()
       };
       if (!body.map_name || !body.start_time) { showToast('Required fields missing', 'error'); return; }
       try {
@@ -961,30 +1005,75 @@
     // ──────────────────────────────────────────
     async function loadLogs() {
       try {
-        const res = await fetch('/api/logs');
-        const data = await res.json();
-        const tbody = document.getElementById('logs-table-body');
-        if (!data.length) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-12 text-center text-text-dim text-xs font-black uppercase opacity-30 italic">No submissions yet</td></tr>`;
-          return;
+        const [matchRes, auditRes] = await Promise.all([
+          fetch('/api/logs'),
+          fetch('/api/audit_logs')
+        ]);
+        
+        const matchData = await matchRes.json();
+        const auditData = await auditRes.json();
+
+        // Populate Match Logs
+        const tbodyMatch = document.getElementById('logs-table-body');
+        if (!matchData.length) {
+          tbodyMatch.innerHTML = `<tr><td colspan="7" class="p-12 text-center text-text-dim text-xs font-black uppercase opacity-30 italic">No match submissions recorded</td></tr>`;
+        } else {
+          tbodyMatch.innerHTML = matchData.map(l => {
+            const time = l.timestamp ? l.timestamp.substring(11, 16) : '—';
+            return `<tr class="border-b border-border-c transition-colors hover:bg-white/5">
+              <td class="p-4 text-text-dim font-bold">${time}</td>
+              <td class="p-4 text-gaming-red font-black italic tracking-tighter">MATCH #${l.match_number}</td>
+              <td class="p-4 text-white font-black italic uppercase">${l.team_name}</td>
+              <td class="p-4 text-center text-text-dim font-black">${l.kills}</td>
+              <td class="p-4 text-center text-slate-300 font-black italic">RANK #${l.placement}</td>
+              <td class="p-4 text-center font-black text-sm text-gaming-cyan italic">${l.points} PTS</td>
+              <td class="p-4 text-right">
+                  <button onclick="deleteLog(${l.id})" class="text-red-500/50 hover:text-red-500 transition-colors">
+                      <span class="material-symbols-outlined text-sm">delete</span>
+                  </button>
+              </td>
+            </tr>`;
+          }).join('');
         }
-        tbody.innerHTML = data.map(l => {
-          const time = l.timestamp ? l.timestamp.substring(11, 16) : '—';
-          return `<tr class="border-b border-border-c transition-colors">
-            <td class="p-4 text-text-dim font-bold">${time}</td>
-            <td class="p-4 text-primary-red font-black italic tracking-tighter">#${l.match_number}</td>
-            <td class="p-4 text-white font-black italic uppercase">${l.team_name}</td>
-            <td class="p-4 text-center text-text-dim">${l.kills}</td>
-            <td class="p-4 text-center text-slate-300 font-black italic">#${l.placement}</td>
-            <td class="p-4 text-center font-black text-sm text-gaming-red italic">${l.points}</td>
-            <td class="p-4 text-right">
-                <button onclick="deleteLog(${l.id})" class="text-red-500/50 hover:text-red-500 transition-colors">
-                    <span class="material-symbols-outlined text-sm">delete</span>
-                </button>
-            </td>
-          </tr>`;
-        }).join('');
-      } catch(e) { showToast('Audit logs load failed', 'error'); }
+
+        // Populate Audit Logs
+        const tbodyAudit = document.getElementById('audit-table-body');
+        if (!auditData.length) {
+          tbodyAudit.innerHTML = `<tr><td colspan="3" class="p-12 text-center text-text-dim text-xs font-black uppercase opacity-30 italic">No system audit logs found</td></tr>`;
+        } else {
+          tbodyAudit.innerHTML = auditData.map(a => {
+            const time = a.timestamp ? a.timestamp.substring(5, 19).replace('T', ' ') : '—';
+            let actionColor = 'text-white';
+            if (a.action.includes('Delete') || a.action.includes('Reset')) actionColor = 'text-gaming-red';
+            if (a.action.includes('Add') || a.action.includes('Update')) actionColor = 'text-gaming-cyan';
+            
+            return `<tr class="border-b border-border-c hover:bg-white/5 transition-colors">
+              <td class="p-4 text-text-dim font-bold w-40">${time}</td>
+              <td class="p-4 font-black italic ${actionColor} uppercase">${a.action}</td>
+              <td class="p-4 text-zinc-400 font-bold max-w-sm truncate" title="${a.details || ''}">${a.details || '—'}</td>
+            </tr>`;
+          }).join('');
+        }
+      } catch(e) { showToast('Logs load failed', 'error'); console.error(e); }
+    }
+
+    function setLogView(view) {
+      const matchV = document.getElementById('view-match-logs');
+      const auditV = document.getElementById('view-audit-logs');
+      const btnMatch = document.getElementById('btn-view-match');
+      const btnAudit = document.getElementById('btn-view-audit');
+
+      if (view === 'match') {
+        matchV.classList.remove('hidden');
+        auditV.classList.add('hidden');
+        btnMatch.className = "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-gaming-red text-white shadow-lg shadow-gaming-red/20";
+        btnAudit.className = "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-text-dim hover:text-white";
+      } else {
+        matchV.classList.add('hidden');
+        auditV.classList.remove('hidden');
+        btnAudit.className = "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-gaming-cyan text-black shadow-lg shadow-gaming-cyan/20";
+        btnMatch.className = "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-text-dim hover:text-white";
+      }
     }
 
     async function deleteLog(id) {
