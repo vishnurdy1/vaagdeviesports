@@ -39,6 +39,17 @@ def get_db():
     return conn
 
 
+def log_audit(action, details=None):
+    """Log an administrative action."""
+    try:
+        conn = get_db()
+        conn.execute("INSERT INTO audit_logs (action, details) VALUES (?, ?)", (action, details))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[ERROR] Failed to log audit: {e}")
+
+
 def init_db():
     """Create tables if they don't exist and seed demo data."""
     conn = get_db()
@@ -81,6 +92,16 @@ def init_db():
         )
     """)
 
+    # Audit Logs table (Admin actions)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            action    TEXT NOT NULL,
+            details   TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # Match Schedule table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS schedule (
@@ -89,7 +110,8 @@ def init_db():
             game         TEXT    NOT NULL,
             map_name     TEXT    NOT NULL,
             start_time   TEXT    NOT NULL,
-            status       TEXT    DEFAULT 'Upcoming'
+            status       TEXT    DEFAULT 'Upcoming',
+            winner_team  TEXT
         )
     """)
 
@@ -261,6 +283,7 @@ def api_update_score():
         """, (team_name, kills, placement, total_points, match_number))
         
         conn.commit()
+        log_audit("Score Updated", f"Team: {team_name}, Match: {match_number}, Kills: {kills}, Place: {placement}")
     except Exception as e:
         conn.close()
         return jsonify({"success": False, "message": str(e)}), 500
@@ -290,6 +313,7 @@ def api_reset_scores():
         conn.execute("DELETE FROM leaderboard")
         conn.execute("DELETE FROM match_logs")
         conn.commit()
+        log_audit("Tournament Reset", "All scores and match logs cleared.")
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
@@ -325,6 +349,7 @@ def api_sync_leaderboard():
             """, (r["team_name"], r["tk"], r["lp"], r["tp"]))
         
         conn.commit()
+        log_audit("Leaderboard Sync", "Standings recalculated from match logs.")
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
@@ -352,6 +377,7 @@ def api_teams():
         conn.execute("INSERT INTO teams (team_name, captain_name, game, members, uid_branch, year) VALUES (?, ?, ?, ?, ?, ?)",
                     (data['team_name'], data['captain_name'], data['game'], data.get('members', ''), data.get('uid_branch', ''), data.get('year', '')))
         conn.commit()
+        log_audit("Team Added", f"Team Name: {data['team_name']}, Game: {data['game']}")
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
@@ -366,10 +392,12 @@ def api_team_detail(team_id):
     conn = get_db()
     if request.method == 'DELETE':
         conn.execute("DELETE FROM teams WHERE id = ?", (team_id,))
+        log_audit("Team Deleted", f"ID: {team_id}")
     elif request.method == 'PUT':
         data = request.get_json()
         conn.execute("UPDATE teams SET team_name=?, captain_name=?, game=?, members=?, uid_branch=?, year=? WHERE id=?",
                     (data['team_name'], data['captain_name'], data['game'], data.get('members', ''), data.get('uid_branch', ''), data.get('year', ''), team_id))
+        log_audit("Team Updated", f"ID: {team_id}, Team: {data['team_name']}")
     
     conn.commit()
     conn.close()
@@ -391,8 +419,8 @@ def api_schedule():
         return jsonify({"success": False, "message": "Unauthorized"}), 401
         
     data = request.get_json()
-    conn.execute("INSERT INTO schedule (match_number, game, map_name, start_time, status) VALUES (?, ?, ?, ?, ?)",
-                (data['match_number'], data['game'], data['map_name'], data['start_time'], data.get('status', 'Upcoming')))
+    conn.execute("INSERT INTO schedule (match_number, game, map_name, start_time, status, winner_team) VALUES (?, ?, ?, ?, ?, ?)",
+                (data['match_number'], data['game'], data['map_name'], data['start_time'], data.get('status', 'Upcoming'), data.get('winner_team')))
     conn.commit()
     conn.close()
     return jsonify({"success": True})
@@ -405,10 +433,12 @@ def api_schedule_detail(sid):
     conn = get_db()
     if request.method == 'DELETE':
         conn.execute("DELETE FROM schedule WHERE id = ?", (sid,))
+        log_audit("Schedule Deleted", f"ID: {sid}")
     elif request.method == 'PUT':
         data = request.get_json()
-        conn.execute("UPDATE schedule SET match_number=?, game=?, map_name=?, start_time=?, status=? WHERE id=?",
-                    (data['match_number'], data['game'], data['map_name'], data['start_time'], data['status'], sid))
+        conn.execute("UPDATE schedule SET match_number=?, game=?, map_name=?, start_time=?, status=?, winner_team=? WHERE id=?",
+                    (data['match_number'], data['game'], data['map_name'], data['start_time'], data['status'], data.get('winner_team'), sid))
+        log_audit("Schedule Updated", f"Match: {data['match_number']}, Winner: {data.get('winner_team')}")
     conn.commit()
     conn.close()
     return jsonify({"success": True})
@@ -453,12 +483,27 @@ def api_delete_log(log_id):
     try:
         conn.execute("DELETE FROM match_logs WHERE id = ?", (log_id,))
         conn.commit()
+        log_audit("Match Log Deleted", f"Log ID: {log_id}")
         # Note: Leaderboard will be out of sync until a manual Sync is triggered
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         conn.close()
     return jsonify({"success": True})
+
+
+# ─────────────────────────────────────────
+#  Audit Logs API
+# ─────────────────────────────────────────
+@app.route('/api/audit_logs', methods=['GET'])
+def api_audit_logs():
+    if not session.get('logged_in'):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100").fetchall()
+    conn.close()
+    return jsonify([dict(row) for row in rows])
 
 
 # ─────────────────────────────────────────
@@ -479,6 +524,7 @@ def api_settings():
     print(f"[LOG] Received settings update: {data}")
     for k, v in data.items():
         conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (k, str(v)))
+        log_audit("Setting Updated", f"Key: {k}, Value: {v}")
     
     conn.commit()
     conn.close()
