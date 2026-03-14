@@ -61,7 +61,10 @@ def init_db():
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             team_name    TEXT    UNIQUE NOT NULL,
             captain_name TEXT,
-            game         TEXT    CHECK(game IN ('BGMI', 'Free Fire'))
+            game         TEXT    CHECK(game IN ('BGMI', 'Free Fire')),
+            members      TEXT,   -- Comma separated names
+            uid_branch   TEXT,   -- Branch/UID
+            year         TEXT    -- Year of college
         )
     """)
 
@@ -346,8 +349,8 @@ def api_teams():
         
     data = request.get_json()
     try:
-        conn.execute("INSERT INTO teams (team_name, captain_name, game) VALUES (?, ?, ?)",
-                    (data['team_name'], data['captain_name'], data['game']))
+        conn.execute("INSERT INTO teams (team_name, captain_name, game, members, uid_branch, year) VALUES (?, ?, ?, ?, ?, ?)",
+                    (data['team_name'], data['captain_name'], data['game'], data.get('members', ''), data.get('uid_branch', ''), data.get('year', '')))
         conn.commit()
         return jsonify({"success": True})
     except Exception as e:
@@ -365,8 +368,8 @@ def api_team_detail(team_id):
         conn.execute("DELETE FROM teams WHERE id = ?", (team_id,))
     elif request.method == 'PUT':
         data = request.get_json()
-        conn.execute("UPDATE teams SET team_name=?, captain_name=?, game=? WHERE id=?",
-                    (data['team_name'], data['captain_name'], data['game'], team_id))
+        conn.execute("UPDATE teams SET team_name=?, captain_name=?, game=?, members=?, uid_branch=?, year=? WHERE id=?",
+                    (data['team_name'], data['captain_name'], data['game'], data.get('members', ''), data.get('uid_branch', ''), data.get('year', ''), team_id))
     
     conn.commit()
     conn.close()
@@ -419,12 +422,12 @@ def api_team_stats():
     conn = get_db()
     # Join teams with leaderboard to get kills and points
     rows = conn.execute("""
-        SELECT t.id, t.team_name, t.game, t.captain_name,
+        SELECT t.id, t.team_name, t.game, t.captain_name, t.members, t.uid_branch, t.year,
                COALESCE(SUM(l.kills), 0) as kills,
                COALESCE(SUM(l.points), 0) as points
         FROM teams t
         LEFT JOIN match_logs l ON t.team_name = l.team_name
-        GROUP BY t.id, t.team_name, t.game, t.captain_name
+        GROUP BY t.id, t.team_name, t.game, t.captain_name, t.members, t.uid_branch, t.year
         ORDER BY points DESC, kills DESC
     """).fetchall()
     conn.close()
