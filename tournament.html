@@ -193,6 +193,7 @@
                   <th class="p-4">Game</th>
                   <th class="p-4">Map</th>
                   <th class="p-4">Time</th>
+                  <th class="p-4">Winner</th>
                   <th class="p-4 text-right">Status</th>
                 </tr>
               </thead>
@@ -420,6 +421,9 @@
               <td class="p-4 font-black text-sm uppercase italic ${gameClass}">${m.game}</td>
               <td class="p-4 text-sm text-slate-300 font-bold">${m.map_name}</td>
               <td class="p-4 text-xs text-text-dim font-bold uppercase">${m.start_time}</td>
+              <td class="p-4">
+                <span class="text-[10px] font-black italic text-gaming-cyan uppercase tracking-tighter">${m.winner_team || '—'}</span>
+              </td>
               <td class="p-4 text-right">
                 <span class="text-[9px] font-black uppercase px-2 py-1 rounded border ${statusClass}">
                   ${liveDot}${m.status}
