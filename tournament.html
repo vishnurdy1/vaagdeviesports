@@ -212,7 +212,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                   <thead><tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
-                    <th class="p-4">#</th><th class="p-4">Team</th><th class="p-4 text-center">Kills</th><th class="p-4 text-center">Pts</th>
+                    <th class="p-4">#</th><th class="p-4">Team & Squad</th><th class="p-4">Branch/Year</th><th class="p-4 text-center">Kills</th><th class="p-4 text-center">Pts</th>
                   </tr></thead>
                   <tbody id="bgmi-teams-body" class="divide-y divide-border-c"></tbody>
                 </table>
@@ -227,7 +227,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                   <thead><tr class="text-[9px] font-black uppercase text-text-dim border-b border-border-c">
-                    <th class="p-4">#</th><th class="p-4">Team</th><th class="p-4 text-center">Kills</th><th class="p-4 text-center">Pts</th>
+                    <th class="p-4">#</th><th class="p-4">Team & Squad</th><th class="p-4">Branch/Year</th><th class="p-4 text-center">Kills</th><th class="p-4 text-center">Pts</th>
                   </tr></thead>
                   <tbody id="ff-teams-body" class="divide-y divide-border-c"></tbody>
                 </table>
@@ -442,7 +442,14 @@
           return teams.map((t, i) => `
             <tr class="border-b border-border-c hover:bg-white/5 transition-colors">
               <td class="p-4 font-black text-xs text-text-dim">${i+1}</td>
-              <td class="p-4 font-bold text-xs text-white uppercase italic tracking-tight">${t.team_name}</td>
+              <td class="p-4">
+                <div class="font-bold text-xs text-white uppercase italic tracking-tight">${t.team_name}</div>
+                <div class="text-[9px] text-text-dim italic truncate max-w-[150px]">${t.members || '—'}</div>
+              </td>
+              <td class="p-4">
+                <div class="text-[10px] text-zinc-400 font-bold uppercase">${t.uid_branch || '—'}</div>
+                <div class="text-[9px] text-zinc-500 font-black uppercase">${t.year || '—'}</div>
+              </td>
               <td class="p-4 text-center text-xs text-text-dim font-bold">${t.kills}</td>
               <td class="p-4 text-center font-black text-sm ${color}">${t.points}</td>
             </tr>`).join('');
